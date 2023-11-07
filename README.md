@@ -85,7 +85,7 @@ The JSON file can contain either a saved workflow or an exported node template. 
 
 While any workflow file should work out of the box, in some cases you may want to edit it. Any values entered into the workflow’s widgets will become the new defaults for the integrated node. If you would rather keep ComfyUI’s defaults instead, remove the `widget_values` properties from the workflow file.
 
-The order in which the widgets show up in the integrated node is determined by the `order` property of the nodes in the original workflow. If you prefer to have the widgets of a different node at the top, adjust its `order` property accordingly.
+The order in which the widgets show up in the integrated node is determined by the `order` property of the nodes in the original workflow. If you prefer to have the widgets of a different node at the top, adjust its `order` property accordingly. *Note*: This won’t change the fact that all optional values are always displayed at the bottom.
 
 ### display_name
 
