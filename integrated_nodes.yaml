@@ -1,0 +1,27 @@
+DoublePrompt:
+  display_name: Double Prompt
+  merge_inputs:
+    clip: clip_2
+  rename_outputs:
+    1 CONDITIONING: positive
+    2 CONDITIONING: negative
+  workflow: double_prompt.json
+
+ControlNetPrompts:
+  display_name: ControlNet with Prompts
+  merge_inputs:
+    clip: clip_2
+  export_outputs:
+  - 5 positive
+  - 5 negative
+  workflow: controlnet_prompts.json
+
+txt2img:
+  workflow: txt2img.json
+
+Inpaint:
+  workflow: inpaint.json
+
+InpaintNotMasked:
+  display_name: Inpaint not Masked
+  workflow: inpaint_not_masked.json

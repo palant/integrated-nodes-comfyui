@@ -1,0 +1,198 @@
+{
+  "last_node_id": 7,
+  "last_link_id": 4,
+  "nodes": [
+    {
+      "id": 5,
+      "type": "ControlNetApplyAdvanced",
+      "pos": [
+        500,
+        200
+      ],
+      "order": 4,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 1
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 2
+        },
+        {
+          "name": "control_net",
+          "type": "CONTROL_NET",
+          "link": 3
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [
+        50,
+        200
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "order": 1,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            1
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "CLIPTextEncode",
+      "pos": [
+        50,
+        500
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "order": 2,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            2
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "ControlNetLoader",
+      "pos": [
+        500,
+        50
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "order": 3,
+      "outputs": [
+        {
+          "name": "CONTROL_NET",
+          "type": "CONTROL_NET",
+          "links": [
+            3
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "LoadImage",
+      "pos": [
+        500,
+        500
+      ],
+      "order": 5,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3
+        }
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      3,
+      0,
+      5,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      2,
+      4,
+      0,
+      5,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      3,
+      6,
+      0,
+      5,
+      2,
+      "CONTROL_NET"
+    ],
+    [
+      4,
+      7,
+      0,
+      5,
+      3,
+      "IMAGE"
+    ]
+  ],
+  "version": 0.4
+}
