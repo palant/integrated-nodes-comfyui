@@ -93,6 +93,10 @@ This is the name under which the node should be displayed in ComfyUI. If omitted
 
 Unlike the internal name, the display name can be changed freely without invalidating existing workflows.
 
+### category
+
+This is the category to sort the node into in ComfyUI. If omitted, the category `integrated` will be used.
+
 ### merge_inputs
 
 All inputs of the original workflow that don’t have links attached to them will be present in the integrated node. Inputs with the same type can be merged via `merge_inputs` property however.
