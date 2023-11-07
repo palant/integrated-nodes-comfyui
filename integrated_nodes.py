@@ -77,7 +77,10 @@ class Node(object):
             input.set_default_value(value)
 
             if input.type == "INT" and input.name in ("seed", "denoise_seed"):
-                # Seed inputs are special and result in two saved values, ignore next one
+                # Seed inputs get an additional control_after_generate widget, ignore its value
+                skip_next = True
+            elif len(input.descriptor) > 1 and input.descriptor[1].get("image_upload") is True:
+                # Image upload inputs get an additional IMAGEUPLOAD widget, ignore its value
                 skip_next = True
 
 
