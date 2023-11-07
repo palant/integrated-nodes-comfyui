@@ -146,7 +146,11 @@ class NodeProcessor(object):
     def map_inputs(s, state):
         params = {}
         for name, register in s.NODE.input_map.items():
-            params[name] = state[register]
+            try:
+                params[name] = state[register]
+            except KeyError:
+                # ignore missing parameters, probably optional
+                pass
         return params
 
 
