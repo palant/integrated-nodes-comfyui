@@ -167,6 +167,19 @@ This instructs the tool to rename the output named `CONDITIONING` on the node wi
 
 *Note*: While workflow JSON files have the node ID specified explicitly in the data, exported node templates do not. Here the node ID is the index of a node in the `nodes` list, with the first node having the ID `0`.
 
+## Using custom nodes in integrated nodes
+
+You can use other custom nodes in integrated nodes, but these custom nodes have to be already present when the integrated node is created. When using the default `custom_nodes` folder, you cannot control the order in which custom nodes are loaded however.
+
+The solution is creating a different folder like `custom_nodes_last` and putting the `integrated_nodes` folder into this one. You then create an `extra_model_paths.yaml` file in the ComfyUI directory with the following contents:
+
+```yaml
+custom_nodes_last:
+    custom_nodes: custom_nodes_last
+```
+
+If you already have a `extra_model_paths.yaml` file, you add this entry to the end of file. This makes sure that integrated nodes are always created last, when all the other custom nodes are already loaded.
+
 ## Caveats
 
 This is a purely server-side approach, it has no impact on special functionality added on the client side. This means that nodes like Primitive or Reroute cannot be integrated, these have no server-side equivalents. Also, setting a default value for the `control_after_generate` widget isn’t possible.
