@@ -79,7 +79,7 @@ You put the node’s internal name first and then list its properties indented. 
 
 ### workflow
 
-This is the only required property, the path to the workflow JSON files. You can provide both absolute and relative paths. The latter are resolved relative to the directory containing the `integrated_nodes.yaml` file.
+This is the only required property, the path to the workflow JSON file. You can provide both absolute and relative paths. The latter are resolved relative to the directory containing the `integrated_nodes.yaml` file.
 
 The JSON file can contain either a saved workflow or an exported node template. If a node template file contains multiple templates, only the first one will be used.
 
