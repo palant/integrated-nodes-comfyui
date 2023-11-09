@@ -373,7 +373,7 @@ def process_workflow(workflow, export_outputs, rename_outputs):
 
 def merge_inputs(inputs, mapping):
     if not isinstance(mapping, dict):
-        warn(f"merge_inputs entry should be a dictionaty but got {mapping}, ignoring")
+        warn(f"merge_inputs entry should be a dictionary but got {mapping}, ignoring")
         return
 
     for target, sources in mapping.items():
@@ -403,12 +403,12 @@ def merge_inputs(inputs, mapping):
 
 def rename_inputs(inputs, mapping):
     if not isinstance(mapping, dict):
-        warn(f"rename_inputs entry should be a dictionaty but got {mapping}, ignoring")
+        warn(f"rename_inputs entry should be a dictionary but got {mapping}, ignoring")
         return
 
     for old, new in mapping.items():
         if old not in inputs:
-            warn(f"Cannot rename input {old}, no input wiht this name exists")
+            warn(f"Cannot rename input {old}, no input with this name exists")
             continue
 
         if new in inputs:
