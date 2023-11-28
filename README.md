@@ -97,9 +97,27 @@ Unlike the internal name, the display name can be changed freely without invalid
 
 This is the category to sort the node into in ComfyUI. If omitted, the category `integrated` will be used.
 
+### hide_inputs
+
+By default, all inputs of the original workflow without incoming links will be present in the integrated node. If some input is optional or has a default value that should not be changed, it can be hidden via `hide_inputs` property.
+
+For example, the following will hide the inputs `model_strength` and `sampler`:
+
+```yaml
+  hide_inputs:
+  - model_strength
+  - sampler
+```
+
+The same can be written on one line if desirable:
+
+```yaml
+  hide_inputs: [model_strength, sampler]
+```
+
 ### merge_inputs
 
-All inputs of the original workflow that don’t have links attached to them will be present in the integrated node. Inputs with the same type can be merged via `merge_inputs` property however.
+Inputs of the same type present on the integrated node can be merged via `merge_inputs` property. These will always have the same value then.
 
 For example, if the original workflow contained two prompt widgets, both had a `clip` input. In the integrated mode, the second `clip` input is automatically renamed into `clip_2`. Typically however, both are supposed to receive the same CLIP model. So `clip_2` input can be merged into the `clip` input:
 

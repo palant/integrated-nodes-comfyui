@@ -100,6 +100,22 @@ class Input(object):
         self.link = None
 
 
+    def get_default_value(self):
+        if len(self.descriptor) >= 2 and "default" in self.descriptor[1]:
+            return self.descriptor[1]["default"]
+        elif self.descriptor[0] == "STRING":
+            return ""
+        elif self.descriptor[0] == "INT":
+            return 0
+        elif self.descriptor[0] == "FLOAT":
+            return 0.0
+        elif self.descriptor[0] == "BOOLEAN":
+            return False
+        elif isinstance(self.descriptor[0], list) and len(self.descriptor[0]) > 0:
+            return self.descriptor[0][0]
+        return None
+
+
     def set_default_value(self, value):
         if len(self.descriptor) == 1:
             self.descriptor = (self.type, {"default": value})
@@ -134,6 +150,13 @@ class HiddenInput(object):
     @property
     def registers(self):
         return [self.register]
+
+
+class ConstantInput(object):
+    COLLECTION = None
+
+    def __init__(self, registers):
+        self.registers = registers
 
 
 class Output(object):
@@ -202,6 +225,7 @@ class IntegratedNode(object):
     PROCESSORS = None
     INPUTS = None
     OUTPUTS = None
+    CONSTANT_STATE = None
 
     def __init__(self):
         self.processors = [processor() for processor in self.PROCESSORS]
@@ -211,6 +235,7 @@ class IntegratedNode(object):
     @classmethod
     def construct_state(s, **kwargs):
         state = {}
+        kwargs.update(s.CONSTANT_STATE)
         for name, value in kwargs.items():
             try:
                 input = s.INPUTS[name]
@@ -218,6 +243,7 @@ class IntegratedNode(object):
                 raise Exception(f"Unexpected parameter {name}")
             for register in input.registers:
                 state[register] = value
+
         return state
 
 
@@ -225,7 +251,8 @@ class IntegratedNode(object):
     def INPUT_TYPES(s):
         types = {}
         for name, input in s.INPUTS.items():
-            types.setdefault(input.COLLECTION, {})[name] = input.descriptor
+            if input.COLLECTION is not None:
+                types.setdefault(input.COLLECTION, {})[name] = input.descriptor
         return types
 
     @classmethod
@@ -412,6 +439,26 @@ def process_workflow(workflow, export_outputs, rename_outputs):
     return (processors, exported_inputs, exported_outputs, is_output_node)
 
 
+def hide_inputs(inputs, hidden):
+    constant_state = {}
+    for name in hidden:
+        try:
+            input = inputs[name]
+        except KeyError:
+            warn(f"Input {name} not found, not hiding")
+            continue
+
+        value = input.get_default_value()
+        if input.COLLECTION == "required" and value is None:
+            warn(f"Cannot hide input {name}, it is required and has no default value")
+            continue
+
+        constant_state[name] = value
+        inputs[name] = ConstantInput(input.registers)
+
+    return constant_state
+
+
 def merge_inputs(inputs, mapping):
     if not isinstance(mapping, dict):
         warn(f"merge_inputs entry should be a dictionary but got {mapping}, ignoring")
@@ -498,6 +545,7 @@ def create_integrated_node(name, info):
         warn(f"Ignoring integrated node {name}, failed processing workflow")
         return
 
+    constant_state = hide_inputs(inputs, info.get("hide_inputs", {}))
     merge_inputs(inputs, info.get("merge_inputs", {}))
     rename_inputs(inputs, info.get("rename_inputs", {}))
 
@@ -505,6 +553,7 @@ def create_integrated_node(name, info):
         "PROCESSORS": processors,
         "INPUTS": inputs,
         "OUTPUTS": outputs,
+        "CONSTANT_STATE": constant_state,
         "CATEGORY": info.get("category", "integrated"),
         "OUTPUT_NODE": is_output_node,
     })
