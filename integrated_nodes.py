@@ -267,7 +267,7 @@ class IntegratedNode(object):
 
 
 def warn(warning):
-    print(f"integrated_nodes.yaml: {warning}", file=sys.stderr)
+    print(f"integrated_nodes/integrated_nodes.yaml: {warning}", file=sys.stderr)
 
 
 max_register_id = 0
