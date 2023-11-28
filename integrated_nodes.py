@@ -495,15 +495,32 @@ def create_integrated_node(name, info):
 
 
 def load_config():
-    path = os.path.join(os.path.dirname(__file__), "integrated_nodes.yaml")
-    with open(path, 'r') as input:
-        data = yaml.safe_load(input)
+    # Path to the integrated_nodes directory
+    dir_path = os.path.join(os.path.dirname(__file__), "integrated_nodes")
 
-    if not isinstance(data, dict):
-        warn("File does not contain a dictionary, ignoring")
-        return
+    # Initialize an empty dictionary to store the cumulative data
+    cumulative_data = {}
 
-    for name, info in data.items():
+    # Iterate over all files in the directory
+    for filename in os.listdir(dir_path):
+        # Check if the file is a YAML file
+        if filename.endswith('.yaml'):
+            file_path = os.path.join(dir_path, filename)
+
+            # Open and load the YAML file
+            with open(file_path, 'r') as input:
+                data = yaml.safe_load(input)
+
+                # Check if the file's data is a dictionary
+                if not isinstance(data, dict):
+                    warn(f"File {filename} does not contain a dictionary, ignoring")
+                    continue
+
+                # Merge the data into the cumulative dictionary
+                cumulative_data.update(data)
+
+    # Process the cumulative data
+    for name, info in cumulative_data.items():
         create_integrated_node(name, info)
 
 load_config()

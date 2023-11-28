@@ -63,7 +63,7 @@ async function exportSelectedNodes() {
     download(name + ".json", data); //Make it semi-usable for now at least, allows the user to manually mode the created files to the correct directory (custom_nodes/integrated-nodes-comfyui)
 
     //await saveYAML(name, yamlContent, true, 'yaml');
-    download('add this code to integrated_nodes.yaml', yamlContent);  //Would perhaps want to append this to the file or add functionality to load a folder of yamls
+    download(name + ".yaml", yamlContent);  //Would perhaps want to append this to the file or add functionality to load a folder of yamls
 }
 
 
@@ -153,7 +153,7 @@ function generateYAML(name, category) {
     let yamlContent = `
 ${name}:
   display_name: ${name}
-  workflow: ${name}.json
+  workflow: workflows/${name}.json
   category: ${category}
   `;
 
