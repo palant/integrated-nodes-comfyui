@@ -619,7 +619,7 @@ async def add_node(request):
         output.write(prompt)
 
     with open(config_path, 'w') as output:
-        yaml.safe_dump(data, output)
+        yaml.safe_dump(data, output, sort_keys=False)
 
     create_integrated_node(actual_name, data[actual_name])
     GLOBAL_NODE_CLASS_MAPPINGS[actual_name] = NODE_CLASS_MAPPINGS[actual_name]
