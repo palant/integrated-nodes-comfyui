@@ -483,7 +483,7 @@ def create_integrated_node(name, info):
         "PROCESSORS": processors,
         "INPUTS": inputs,
         "OUTPUTS": outputs,
-        "CATEGORY": info.get("category", "integrated"),
+        "CATEGORY": info.get("category", "Integrated"),
         "OUTPUT_NODE": is_output_node,
     })
 

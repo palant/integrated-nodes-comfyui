@@ -5,7 +5,7 @@ DoublePrompt:
   rename_outputs:
     1 CONDITIONING: positive
     2 CONDITIONING: negative
-  workflow: integrated_nodes/ouble_prompt.json
+  workflow: integrated_nodes/double_prompt.json
 
 ControlNetPrompts:
   display_name: ControlNet with Prompts

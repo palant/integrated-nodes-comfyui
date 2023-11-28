@@ -1,5 +1,4 @@
 import { app } from "../../scripts/app.js";
-import { api } from "../../scripts/api.js";
 
 app.registerExtension({
     name: "IntegrateNodes",
@@ -18,7 +17,7 @@ async function exportSelectedNodes() {
     let name;
     name = promptUser_nodeName();
     if (name === null) return;
-    
+
     let category = prompt("Enter node category") || "Integrated";
 
     const selectedNodes = getSelectedNodes();
@@ -26,14 +25,16 @@ async function exportSelectedNodes() {
     let links = [];
 
     selectedNodes.forEach(node => {
-        node.outputs.forEach((output, outputIndex) => {
-            (output.links || []).forEach(linkId => {
-                let link = app.graph.links[linkId];
-                if (link && selectedNodes.includes(app.graph.getNodeById(link.target_id))) {
-                    links.push([linkId, node.id, outputIndex, link.target_id, link.target_slot, link.type || "default"]);
-                }
+        if (node.outputs) {
+            node.outputs.forEach((output, outputIndex) => {
+                (output.links || []).forEach(linkId => {
+                    let link = app.graph.links[linkId];
+                    if (link && selectedNodes.includes(app.graph.getNodeById(link.target_id))) {
+                        links.push([linkId, node.id, outputIndex, link.target_id, link.target_slot, link.type || "default"]);
+                    }
+                });
             });
-        });
+        }
     });
 
     let lastNodeId = Math.max(...serializedNodes.map(node => node.id));
@@ -59,7 +60,7 @@ async function exportSelectedNodes() {
 
 async function exportFullWorkflow() {
     let name;
-    name = promptUser_nodeName();   
+    name = promptUser_nodeName();
     if (name === null) return;
 
     let category = prompt("Enter node category") || "Integrated";
@@ -75,17 +76,17 @@ async function exportFullWorkflow() {
     download(name + ".yaml", yamlContent); //This file should be moved to custom_nodes/integrated-nodes-comfyui/integrated_nodes
 }
 
-function promptUser_nodeName(){
+function promptUser_nodeName() {
     let name;
     do {
         name = prompt("Enter node name");
         if (name === null) return name;  // Exits the function if the user clicks 'Cancel'
-    
+
         if (name.trim() === "") {
             alert('The name cannot be empty or consist only of white space');
             continue; // Go to the next iteration of the loop
         }
-    
+
         if (!isNaN(Number(name))) {
             alert('The name cannot consist of only numbers');
         }
