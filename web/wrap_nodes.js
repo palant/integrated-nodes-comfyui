@@ -24,9 +24,30 @@ function download(filename, text) {
     document.body.removeChild(element);
 }
 
-// Export selected nodes
+function nodeName(){
+    let name;
+    do {
+        name = prompt("Enter node name");
+        if (name === null) return name;  // Exits the function if the user clicks 'Cancel'
+    
+        if (name.trim() === "") {
+            alert('The name cannot be empty or consist only of white space');
+            continue; // Go to the next iteration of the loop
+        }
+    
+        if (!isNaN(Number(name))) {
+            alert('The name cannot consist of only numbers');
+        }
+    } while (!isNaN(Number(name)) || name.trim() === "");
+
+    return name;
+}
+
 async function exportSelectedNodes() {
-    let name = prompt("Enter node name") || "Integrated Selection";
+    let name;
+    name = nodeName();
+    if (name === null) return;
+    
     let category = prompt("Enter node category") || "Integrated";
 
     const selectedNodes = getSelectedNodes();
@@ -44,7 +65,6 @@ async function exportSelectedNodes() {
         });
     });
 
-
     let lastNodeId = Math.max(...serializedNodes.map(node => node.id));
     let lastLinkId = links.length > 0 ? Math.max(...links.map(link => link[0])) : 0;
 
@@ -56,33 +76,40 @@ async function exportSelectedNodes() {
     };
 
     let data = JSON.stringify(workflowData);
-    const yamlContent = generateYAML(name, category);
+    let yamlContent = generateYAML(name, category);
 
     //const directory = 'custom_nodes/integrated-nodes-comfyui'; //need to be able to set this dir when the saving function works...
     //await saveJSON(name, data, true, 'json');
-    download(name + ".json", data); //Make it semi-usable for now at least, allows the user to manually mode the created files to the correct directory (custom_nodes/integrated-nodes-comfyui)
+    download(name + ".json", data); //Make it semi-usable for now at least, allows the user to manually move the created files to the correct directory (custom_nodes/integrated-nodes-comfyui/integrated_nodes/workflows)
 
     //await saveYAML(name, yamlContent, true, 'yaml');
-    download(name + ".yaml", yamlContent);  //Would perhaps want to append this to the file or add functionality to load a folder of yamls
+    download(name + ".yaml", yamlContent);  //This file should be moved to custom_nodes/integrated-nodes-comfyui/integrated_nodes
 }
 
-
 async function exportFullWorkflow() {
-    let name = prompt("Enter node name") || "Integrated Workflow";
+    let name;
+    name = nodeName();   
+    if (name === null) return;
+
     let category = prompt("Enter node category") || "Integrated";
 
     let data = JSON.stringify(app.graph.serialize());
-    await saveFile(name, data, true, 'json');
+    let yamlContent = generateYAML(name, category);
 
-    const yamlContent = generateYAML(name, category);
-    await saveFile(name, yamlContent, true, 'yaml'); // Saving YAML content
+    //const directory = 'custom_nodes/integrated-nodes-comfyui'; //need to be able to set this dir when the saving function works...
+    //await saveJSON(name, data, true, 'json');
+    download(name + ".json", data); //Make it semi-usable for now at least, allows the user to manually move the created files to the correct directory (custom_nodes/integrated-nodes-comfyui/integrated_nodes/workflows)
+
+    //await saveYAML(name, yamlContent, true, 'yaml');
+    download(name + ".yaml", yamlContent); //This file should be moved to custom_nodes/integrated-nodes-comfyui/integrated_nodes
 }
+
 
 function getSelectedNodes() {
     return app.canvas.selected_nodes ? Object.values(app.canvas.selected_nodes) : [];
 }
 
-async function saveJSON(name, workflow, overwrite, filetype) {
+async function saveJSON(name, workflow, overwrite, filetype) { //This is dependant on part of ComfyUI-Custom-Scripts, another solution is needed....
     let body;
     let route = "/pysssss/workflows"; // Adjust the route as needed
     let contentType;
@@ -115,7 +142,7 @@ async function saveJSON(name, workflow, overwrite, filetype) {
     }
 }
 
-async function saveYAML(name, workflow, overwrite, filetype) {
+async function saveYAML(name, workflow, overwrite, filetype) { //This doesn't work at all...
     let body;
     let route = "/pysssss/files/yaml"; // Adjust the route as needed
     let contentType;
@@ -151,10 +178,10 @@ async function saveYAML(name, workflow, overwrite, filetype) {
 
 function generateYAML(name, category) {
     let yamlContent = `
-${name}:
-  display_name: ${name}
+'${name}':
+  display_name: '${name}'
   workflow: integrated_nodes/workflows/${name}.json
-  category: ${category}
+  category: '${category}'
   `;
 
     return yamlContent;
