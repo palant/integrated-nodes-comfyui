@@ -2,26 +2,26 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../../scripts/api.js";
 
 app.registerExtension({
-  name: "IntegrateNodes",
+    name: "IntegrateNodes",
 });
 
 const orig = LGraphCanvas.prototype.getCanvasMenuOptions;
 
-LGraphCanvas.prototype.getCanvasMenuOptions = function() {
-  let options = orig.apply(this, arguments);
-  options.push({ content: "Integrate Selection", callback: exportSelectedNodes });
-  options.push({ content: "Integrate Workflow", callback: exportFullWorkflow });
-  return options;
+LGraphCanvas.prototype.getCanvasMenuOptions = function () {
+    let options = orig.apply(this, arguments);
+    options.push({ content: "Integrate Selection", callback: exportSelectedNodes });
+    options.push({ content: "Integrate Workflow", callback: exportFullWorkflow });
+    return options;
 };
 
 function download(filename, text) {
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-  element.setAttribute('download', filename);
-  element.style.display = 'none';
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 // Export selected nodes
@@ -56,42 +56,30 @@ async function exportSelectedNodes() {
     };
 
     let data = JSON.stringify(workflowData);
-    
-    //download(name + ".json", data);
-	//await saveFile(name, data, true, 'json');
-    
     const yamlContent = generateYAML(name, category);
-    //await saveFile(name, yamlContent, true, 'yaml'); // Saving YAML content
-	
-	const directory = 'custom_nodes/integrated-nodes-comfyui'
-	await saveJSON(name, data, true, 'json');
 
-	await saveYAML(name, yamlContent, true, 'yaml');
-	
-}
+    //const directory = 'custom_nodes/integrated-nodes-comfyui'; //need to be able to set this dir when the saving function works...
+    //await saveJSON(name, data, true, 'json');
+    download(name + ".json", data); //Make it semi-usable for now at least, allows the user to manually mode the created files to the correct directory (custom_nodes/integrated-nodes-comfyui)
 
-
-function serializeNodes(nodes) {
-  let serialized = nodes.map(node => node.serialize());
-  let unconnectedInputs = {}; // Logic to populate this
-  let unconnectedOutputs = {}; // Logic to populate this
-  return { serialized, unconnectedInputs, unconnectedOutputs };
+    //await saveYAML(name, yamlContent, true, 'yaml');
+    download('add this code to integrated_nodes.yaml', yamlContent);  //Would perhaps want to append this to the file or add functionality to load a folder of yamls
 }
 
 
 async function exportFullWorkflow() {
-  let name = prompt("Enter node name") || "Integrated Workflow";
-  let category = prompt("Enter node category") || "Integrated";
+    let name = prompt("Enter node name") || "Integrated Workflow";
+    let category = prompt("Enter node category") || "Integrated";
 
     let data = JSON.stringify(app.graph.serialize());
-	await saveFile(name, data, true, 'json');
-    
+    await saveFile(name, data, true, 'json');
+
     const yamlContent = generateYAML(name, category);
     await saveFile(name, yamlContent, true, 'yaml'); // Saving YAML content
 }
 
 function getSelectedNodes() {
-  return app.canvas.selected_nodes ? Object.values(app.canvas.selected_nodes) : [];
+    return app.canvas.selected_nodes ? Object.values(app.canvas.selected_nodes) : [];
 }
 
 async function saveJSON(name, workflow, overwrite, filetype) {
@@ -99,11 +87,11 @@ async function saveJSON(name, workflow, overwrite, filetype) {
     let route = "/pysssss/workflows"; // Adjust the route as needed
     let contentType;
 
-   
+
     body = JSON.stringify({ name, workflow, overwrite });
     contentType = "application/json";
 
-    
+
 
     try {
         const response = await api.fetchApi(route, {
@@ -132,11 +120,11 @@ async function saveYAML(name, workflow, overwrite, filetype) {
     let route = "/pysssss/files/yaml"; // Adjust the route as needed
     let contentType;
 
-   
+
     body = workflow;
     contentType = "text/yaml";
 
-    
+
 
     try {
         const response = await api.fetchApi(route, {
@@ -162,13 +150,13 @@ async function saveYAML(name, workflow, overwrite, filetype) {
 
 
 function generateYAML(name, category) {
-  let yamlContent = `
+    let yamlContent = `
 ${name}:
   display_name: ${name}
   workflow: ${name}.json
   category: ${category}
   `;
 
-  return yamlContent;
+    return yamlContent;
 }
 
