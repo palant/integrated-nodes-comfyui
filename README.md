@@ -14,51 +14,51 @@ The default `integrated_nodes.yaml` contains a bunch of nodes which you might co
 
 This combines two CLIP encoding prompts in a single node:
 
-![A ComfyUI node titled Double Prompt containing two text widgets](example_images/double_prompt.png)
+![A ComfyUI node titled Double Prompt containing two text widgets](double_prompt.png)
 
 It is equivalent to the following workflow elements:
 
-![A ComfyUI workflow containing two identical nodes titled CLIP Text Encode (Prompt)](example_images/double_prompt_workflow.png)
+![A ComfyUI workflow containing two identical nodes titled CLIP Text Encode (Prompt)](double_prompt_workflow.png)
 
 ### ControlNet with Prompts
 
 This combines an Apply ControlNet node with the nodes typically used with it: ControlNet loader, two text prompts and an image loader.
 
-![A ComfyUI node titled ControlNet with Prompts containing two text widgets, followed by the widgets control_net_name, strength, start_percent, ent_percent, image](example_images/controlnet_prompts.png)
+![A ComfyUI node titled ControlNet with Prompts containing two text widgets, followed by the widgets control_net_name, strength, start_percent, ent_percent, image](controlnet_prompts.png)
 
 It is equivalent to the following workflow elements:
 
-![A ComfyUI workflow containing two identical nodes titled CLIP Text Encode (Prompt), Load ControlNet Model node, Load Image node, all connected to an Apply ControlNet (Advanced) node](example_images/controlnet_prompts_workflow.png)
+![A ComfyUI workflow containing two identical nodes titled CLIP Text Encode (Prompt), Load ControlNet Model node, Load Image node, all connected to an Apply ControlNet (Advanced) node](controlnet_prompts_workflow.png)
 
 ### txt2img
 
 This is a complete text to image workflow in a single node:
 
-![A ComfyUI node titled txt2img containing the widget ckpt_name followed by two text prompts, then the widgets seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise, width, height, batch_size, filename_prefix, file_type](example_images/txt2img.png)
+![A ComfyUI node titled txt2img containing the widget ckpt_name followed by two text prompts, then the widgets seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise, width, height, batch_size, filename_prefix, file_type](txt2img.png)
 
 It is equivalent to the following workflow:
 
-![A ComfyUI workflow containing the nodes Load Checkpoint, twice CLIP Text Encode (Prompt), KSampler, Empty Latent Image, VAE Decode, Save Image](example_images/txt2img_workflow.png)
+![A ComfyUI workflow containing the nodes Load Checkpoint, twice CLIP Text Encode (Prompt), KSampler, Empty Latent Image, VAE Decode, Save Image](txt2img_workflow.png)
 
 ### Inpaint
 
 This is a complete image to image workflow in a single node:
 
-![A ComfyUI node titled Inpaint containing the widget ckpt_name followed by two text prompts, then the widgets seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise, image, grow_mask_by, filename_prefix, file_type](example_images/inpaint.png)
+![A ComfyUI node titled Inpaint containing the widget ckpt_name followed by two text prompts, then the widgets seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise, image, grow_mask_by, filename_prefix, file_type](inpaint.png)
 
 It is equivalent to the following workflow:
 
-![A ComfyUI workflow containing the nodes Load Checkpoint, twice CLIP Text Encode (Prompt), Load Image, VAE Encode (for Inpainting), KSampler, VAE Decode, Save Image](example_images/inpaint_workflow.png)
+![A ComfyUI workflow containing the nodes Load Checkpoint, twice CLIP Text Encode (Prompt), Load Image, VAE Encode (for Inpainting), KSampler, VAE Decode, Save Image](inpaint_workflow.png)
 
 ### Inpaint not Masked
 
 This is largely identical to the Inpaint node but inverts the image mask, so that the non-masked areas are inpainted:
 
-![A ComfyUI node titled Inpaint not Masked containing the widget ckpt_name followed by two text prompts, then the widgets seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise, image, grow_mask_by, filename_prefix, file_type](example_images/inpaint_not_masked.png)
+![A ComfyUI node titled Inpaint not Masked containing the widget ckpt_name followed by two text prompts, then the widgets seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise, image, grow_mask_by, filename_prefix, file_type](inpaint_not_masked.png)
 
 It is equivalent to the following workflow:
 
-![A ComfyUI workflow containing the nodes Load Checkpoint, twice CLIP Text Encode (Prompt), Load Image, VAE Encode (for Inpainting), KSampler, VAE Decode, Save Image](example_images/inpaint_not_masked_workflow.png)
+![A ComfyUI workflow containing the nodes Load Checkpoint, twice CLIP Text Encode (Prompt), Load Image, VAE Encode (for Inpainting), KSampler, VAE Decode, Save Image](inpaint_not_masked_workflow.png)
 
 ## Adding your own integrated nodes
 

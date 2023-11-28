@@ -5,7 +5,7 @@ DoublePrompt:
   rename_outputs:
     1 CONDITIONING: positive
     2 CONDITIONING: negative
-  workflow: integrated_nodes/double_prompt.json
+  workflow: double_prompt.json
 
 ControlNetPrompts:
   display_name: ControlNet with Prompts
@@ -14,14 +14,14 @@ ControlNetPrompts:
   export_outputs:
   - 5 positive
   - 5 negative
-  workflow: integrated_nodes/controlnet_prompts.json
+  workflow: controlnet_prompts.json
 
 txt2img:
-  workflow: integrated_nodes/txt2img.json
+  workflow: txt2img.json
 
 Inpaint:
-  workflow: integrated_nodes/inpaint.json
+  workflow: inpaint.json
 
 InpaintNotMasked:
   display_name: Inpaint not Masked
-  workflow: integrated_nodes/inpaint_not_masked.json
+  workflow: inpaint_not_masked.json
