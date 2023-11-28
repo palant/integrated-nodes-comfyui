@@ -81,11 +81,11 @@ You put the node’s internal name first and then list its properties indented. 
 
 This is the only required property, the path to the workflow JSON file. You can provide both absolute and relative paths. The latter are resolved relative to the directory containing the `integrated_nodes.yaml` file.
 
-The JSON file can contain either a saved workflow or an exported node template. If a node template file contains multiple templates, only the first one will be used.
+The JSON file can contain either a saved workflow (in graph or API format) or an exported node template. If a node template file contains multiple templates, only the first one will be used. It is recommended to use the API format which is more reliable in case of future node changes. With current ComfyUI version, “Enable Dev mode Options” setting needs to be turned on in order to save workflows in API format.
 
-While any workflow file should work out of the box, in some cases you may want to edit it. Any values entered into the workflow’s widgets will become the new defaults for the integrated node. If you would rather keep ComfyUI’s defaults instead, remove the `widget_values` properties from the workflow file.
+While any workflow file should work out of the box, in some cases you may want to edit it. Any values present in the workflow’s widgets will become the new defaults for the integrated node. If you would rather keep ComfyUI’s defaults instead, remove the respective values from the `inputs` (API format) or `widget_values` (graph format) properties in the workflow file.
 
-The order in which the widgets show up in the integrated node is determined by the `order` property of the nodes in the original workflow. If you prefer to have the widgets of a different node at the top, adjust its `order` property accordingly. *Note*: This won’t change the fact that all optional values are always displayed at the bottom.
+The order in which the widgets show up in the integrated node is determined by the node ordering in the original workflow. If you prefer to have the widgets of a different node at the top, reorder them in the workflow file. This is not recommended for exported node templates because reordering will change node IDs here, likely messing up links as a result. *Note*: Reordering nodes won’t change the fact that all optional values are always displayed at the bottom of the integrated node.
 
 ### display_name
 
@@ -184,8 +184,6 @@ If you already have a `extra_model_paths.yaml` file, you add this entry to the e
 
 This is a purely server-side approach, it has no impact on special functionality added on the client side. This means that nodes like Primitive or Reroute cannot be integrated, these have no server-side equivalents. Also, setting a default value for the `control_after_generate` widget isn’t possible.
 
-ComfyUI’s image sizing approach appears to be flawed. As a consequence, images on complicated nodes will appear too small and might be hidden entirely when the node is added initially.
+ComfyUI’s image sizing approach appears to be flawed. As a consequence, images on nodes containing multiline text fields will appear too small and might be hidden entirely when the node is added initially.
 
 ComfyUI currently doesn’t support multiple images on a single node. So if the Inpaint node for example contains both the input and the output image, only one of these images will be displayed at a time (whichever changed last).
-
-The workflow JSON format saves widget values as a plain list, without their names. This approach relies on the widgets to be always present in the same order. If future changes to ComfyUI cause the node’s widgets to be presented in a different order, the defaults from the original workflow might get applied to the wrong widgets.
