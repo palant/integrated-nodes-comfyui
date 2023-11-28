@@ -1,5 +1,5 @@
 import { app } from "../../scripts/app.js";
-import { api } from "../../../scripts/api.js";
+import { api } from "../../scripts/api.js";
 
 app.registerExtension({
     name: "IntegrateNodes",
@@ -14,38 +14,9 @@ LGraphCanvas.prototype.getCanvasMenuOptions = function () {
     return options;
 };
 
-function download(filename, text) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-
-function nodeName(){
-    let name;
-    do {
-        name = prompt("Enter node name");
-        if (name === null) return name;  // Exits the function if the user clicks 'Cancel'
-    
-        if (name.trim() === "") {
-            alert('The name cannot be empty or consist only of white space');
-            continue; // Go to the next iteration of the loop
-        }
-    
-        if (!isNaN(Number(name))) {
-            alert('The name cannot consist of only numbers');
-        }
-    } while (!isNaN(Number(name)) || name.trim() === "");
-
-    return name;
-}
-
 async function exportSelectedNodes() {
     let name;
-    name = nodeName();
+    name = promptUser_nodeName();
     if (name === null) return;
     
     let category = prompt("Enter node category") || "Integrated";
@@ -88,7 +59,7 @@ async function exportSelectedNodes() {
 
 async function exportFullWorkflow() {
     let name;
-    name = nodeName();   
+    name = promptUser_nodeName();   
     if (name === null) return;
 
     let category = prompt("Enter node category") || "Integrated";
@@ -104,12 +75,55 @@ async function exportFullWorkflow() {
     download(name + ".yaml", yamlContent); //This file should be moved to custom_nodes/integrated-nodes-comfyui/integrated_nodes
 }
 
+function promptUser_nodeName(){
+    let name;
+    do {
+        name = prompt("Enter node name");
+        if (name === null) return name;  // Exits the function if the user clicks 'Cancel'
+    
+        if (name.trim() === "") {
+            alert('The name cannot be empty or consist only of white space');
+            continue; // Go to the next iteration of the loop
+        }
+    
+        if (!isNaN(Number(name))) {
+            alert('The name cannot consist of only numbers');
+        }
+    } while (!isNaN(Number(name)) || name.trim() === "");
+
+    return name;
+}
 
 function getSelectedNodes() {
     return app.canvas.selected_nodes ? Object.values(app.canvas.selected_nodes) : [];
 }
 
-async function saveJSON(name, workflow, overwrite, filetype) { //This is dependant on part of ComfyUI-Custom-Scripts, another solution is needed....
+function generateYAML(name, category) {
+    let yamlContent = `
+'${name}':
+  display_name: '${name}'
+  workflow: integrated_nodes/workflows/${name}.json
+  category: '${category}'
+  `;
+
+    return yamlContent;
+}
+
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+
+
+
+
+async function saveJSON(name, workflow, overwrite, filetype) { //This isn't used; this is dependant on part of ComfyUI-Custom-Scripts, another solution is needed....
     let body;
     let route = "/pysssss/workflows"; // Adjust the route as needed
     let contentType;
@@ -151,8 +165,6 @@ async function saveYAML(name, workflow, overwrite, filetype) { //This doesn't wo
     body = workflow;
     contentType = "text/yaml";
 
-
-
     try {
         const response = await api.fetchApi(route, {
             method: "POST",
@@ -174,16 +186,3 @@ async function saveYAML(name, workflow, overwrite, filetype) { //This doesn't wo
         return false;
     }
 }
-
-
-function generateYAML(name, category) {
-    let yamlContent = `
-'${name}':
-  display_name: '${name}'
-  workflow: integrated_nodes/workflows/${name}.json
-  category: '${category}'
-  `;
-
-    return yamlContent;
-}
-
