@@ -10,8 +10,7 @@ NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
 class Node(object):
-    def __init__(self, id, workflow, exported_inputs):
-        type = workflow["type"]
+    def __init__(self, id, type, exported_inputs):
         cls = GLOBAL_NODE_CLASS_MAPPINGS.get(type)
         if cls is None:
             raise Exception(f"Unknown node type {type}")
@@ -20,11 +19,9 @@ class Node(object):
         self.cls = cls
         self.input_map = {}
         self.inputs = []
-        self.input_slots = []
         self.outputs = []
         self.output_types = []
         self.output_names = []
-        self.workflow = workflow
 
         types = getattr(self.cls, "RETURN_TYPES", ())
         names = getattr(self.cls, "RETURN_NAMES", types)
@@ -56,14 +53,11 @@ class Node(object):
         return hasattr(self.cls, "OUTPUT_NODE") and self.cls.OUTPUT_NODE
 
 
-    def separate_input_slots(self, names):
-        for name in names:
-            input = next(input for input in self.inputs if input.name == name)
-            self.inputs.remove(input)
-            self.input_slots.append(input)
+    def input_by_name(self, name):
+        return next(input for input in self.inputs if input.name == name)
 
 
-    def assign_defaults(self, defaults):
+    def assign_defaults_list(self, defaults):
         skip_next = False
         i = 0
         for value in defaults:
@@ -71,8 +65,12 @@ class Node(object):
                 skip_next = False
                 continue
 
-            input = self.inputs[i]
-            i += 1
+            while True:
+                # Find the next input that isn't an input slot
+                input = self.inputs[i]
+                i += 1
+                if not input.link and (isinstance(input.descriptor[0], list) or len(input.descriptor) >= 2):
+                    break
 
             input.set_default_value(value)
 
@@ -84,11 +82,38 @@ class Node(object):
                 skip_next = True
 
 
+    def assign_defaults_map(self, defaults):
+        for name, value in defaults.items():
+            if name == "choose file to upload":
+                continue
+            if isinstance(value, list) and len(value) == 2:
+                self.input_by_name(name).link = (value[0], value[1])
+            else:
+                self.input_by_name(name).set_default_value(value)
+
+
 class Input(object):
     def __init__(self, register, name, descriptor):
         self.registers = [register]
         self.name = name
         self.descriptor = descriptor
+        self.link = None
+
+
+    def get_default_value(self):
+        if len(self.descriptor) >= 2 and "default" in self.descriptor[1]:
+            return self.descriptor[1]["default"]
+        elif self.descriptor[0] == "STRING":
+            return ""
+        elif self.descriptor[0] == "INT":
+            return 0
+        elif self.descriptor[0] == "FLOAT":
+            return 0.0
+        elif self.descriptor[0] == "BOOLEAN":
+            return False
+        elif isinstance(self.descriptor[0], list) and len(self.descriptor[0]) > 0:
+            return self.descriptor[0][0]
+        return None
 
 
     def set_default_value(self, value):
@@ -125,6 +150,13 @@ class HiddenInput(object):
     @property
     def registers(self):
         return [self.register]
+
+
+class ConstantInput(object):
+    COLLECTION = None
+
+    def __init__(self, registers):
+        self.registers = registers
 
 
 class Output(object):
@@ -193,6 +225,7 @@ class IntegratedNode(object):
     PROCESSORS = None
     INPUTS = None
     OUTPUTS = None
+    CONSTANT_STATE = None
 
     def __init__(self):
         self.processors = [processor() for processor in self.PROCESSORS]
@@ -202,6 +235,7 @@ class IntegratedNode(object):
     @classmethod
     def construct_state(s, **kwargs):
         state = {}
+        kwargs.update(s.CONSTANT_STATE)
         for name, value in kwargs.items():
             try:
                 input = s.INPUTS[name]
@@ -209,6 +243,7 @@ class IntegratedNode(object):
                 raise Exception(f"Unexpected parameter {name}")
             for register in input.registers:
                 state[register] = value
+
         return state
 
 
@@ -216,7 +251,8 @@ class IntegratedNode(object):
     def INPUT_TYPES(s):
         types = {}
         for name, input in s.INPUTS.items():
-            types.setdefault(input.COLLECTION, {})[name] = input.descriptor
+            if input.COLLECTION is not None:
+                types.setdefault(input.COLLECTION, {})[name] = input.descriptor
         return types
 
     @classmethod
@@ -278,42 +314,77 @@ def new_register():
 
 
 def create_nodes(workflow):
+    if not isinstance(workflow, dict):
+        raise Exception("Unknown workflow format")
+
+    if isinstance(workflow.get("templates"), list):
+        # Got a node template file, extract the actual workflow
+        templates = workflow["templates"]
+        if len(templates) == 0:
+            raise Exception("Node templates file contains no templates")
+        if len(templates) > 1:
+            warn("Node templates file contains multiple templates, only the first one will be used")
+        template = templates[0]
+        if not isinstance(template, dict):
+            raise Exception("Provided node template is not a dictionary")
+        try:
+            workflow = json.loads(template["data"])
+        except:
+            traceback.print_exc()
+            raise Exception("Node template data isn't a valid JSON string")
+
     nodes = []
     exported_inputs = {}
-    for id, workflow in enumerate(workflow):
-        id = workflow.get("id", id)
-        node = Node(id, workflow, exported_inputs)
-        node.separate_input_slots(map(lambda slot: slot["name"], workflow.get("inputs", [])))
-        node.assign_defaults(workflow.get("widgets_values", []))
-        nodes.append(node)
-    nodes = sorted(nodes, key=lambda node: node.workflow.get("order", 0))
+
+    if isinstance(workflow.get("nodes"), list):
+        # Got a workflow file
+        links = {}
+        for link in workflow.get("links", []):
+            if len(link) == 6:
+                # Workflow
+                _, from_id, from_slot, to_id, to_slot, _ = link
+            else:
+                # Node template
+                from_id, from_slot, to_id, to_slot, _ = link
+            links.setdefault(to_id, {})[to_slot] = [from_id, from_slot]
+
+        for id, node_workflow in enumerate(workflow["nodes"]):
+            node = Node(node_workflow.get("id", id), node_workflow["type"], exported_inputs)
+            for slot, link in links.get(node.id, {}).items():
+                node.input_by_name(node_workflow["inputs"][slot]["name"]).link = link
+            node.assign_defaults_list(node_workflow.get("widgets_values", []))
+            nodes.append(node)
+    else:
+        # Prompt API file
+        for id, node_workflow in workflow.items():
+            node = Node(id, node_workflow["class_type"], exported_inputs)
+            node.assign_defaults_map(node_workflow.get("inputs", {}))
+            nodes.append(node)
+
     return nodes, exported_inputs
 
 
-def connect_links(workflow, nodes):
+def connect_links(nodes):
     def node_by_id(id):
         return next(node for node in nodes if node.id == id)
 
     linked_inputs = set()
     dependencies = {}
-    for link in workflow:
-        if len(link) == 6:
-            # Workflow
-            _, from_id, from_slot, to_id, to_slot, _ = link
-        else:
-            # Node template
-            from_id, from_slot, to_id, to_slot, _ = link
-        from_node = node_by_id(from_id)
-        to_node = node_by_id(to_id)
-        dependencies.setdefault(to_node, set()).add(from_node)
+    for node in nodes:
+        for input in node.inputs:
+            if not input.link:
+                continue
 
-        input = to_node.input_slots[to_slot]
-        output_type = from_node.output_types[from_slot]
-        if input.type != output_type:
-            raise Exception(f"Cannot connect input of type {input} to output of type {output_type}")
+            from_id, from_slot = input.link
+            from_node = node_by_id(from_id)
+            dependencies.setdefault(node, set()).add(from_node)
 
-        from_node.outputs[from_slot].append(input.register)
-        linked_inputs.add(input.register)
+            output_type = from_node.output_types[from_slot]
+            if input.type != output_type:
+                raise Exception(f"Cannot connect input of type {input} to output of type {output_type}")
+
+            from_node.outputs[from_slot].append(input.register)
+            linked_inputs.add(input.register)
     return linked_inputs, dependencies
 
 
@@ -324,11 +395,8 @@ def create_node_processor(node):
 
 
 def process_workflow(workflow, export_outputs, rename_outputs):
-    if not isinstance(workflow, dict):
-        raise Exception("Workflow is not a dictionary")
-
-    nodes, exported_inputs = create_nodes(workflow.get("nodes", []))
-    linked_inputs, dependencies = connect_links(workflow.get("links", []), nodes)
+    nodes, exported_inputs = create_nodes(workflow)
+    linked_inputs, dependencies = connect_links(nodes)
 
     exported_outputs = []
     for node in nodes:
@@ -341,7 +409,7 @@ def process_workflow(workflow, export_outputs, rename_outputs):
                 targets.append(output.register)
 
         # Inputs without incoming links are exported
-        for input in node.input_slots + node.inputs:
+        for input in node.inputs:
             if input.register in linked_inputs:
                 continue
 
@@ -369,6 +437,26 @@ def process_workflow(workflow, export_outputs, rename_outputs):
     is_output_node = any(node.output_node for node in nodes)
 
     return (processors, exported_inputs, exported_outputs, is_output_node)
+
+
+def hide_inputs(inputs, hidden):
+    constant_state = {}
+    for name in hidden:
+        try:
+            input = inputs[name]
+        except KeyError:
+            warn(f"Input {name} not found, not hiding")
+            continue
+
+        value = input.get_default_value()
+        if input.COLLECTION == "required" and value is None:
+            warn(f"Cannot hide input {name}, it is required and has no default value")
+            continue
+
+        constant_state[name] = value
+        inputs[name] = ConstantInput(input.registers)
+
+    return constant_state
 
 
 def merge_inputs(inputs, mapping):
@@ -438,25 +526,6 @@ def create_integrated_node(name, info):
         warn(f"Ignoring integrated node {name}, failed loading workflow from file {workflow_path}")
         return
 
-    if isinstance(workflow.get("templates"), list):
-        # Got a node template file
-        templates = workflow["templates"]
-        if len(templates) == 0:
-            warn(f"Ignoring integrated node {name}, node templates file contains no templates")
-            return
-        if len(templates) > 1:
-            warn(f"Node templates file for integrated node {name} contains multiple templates, only the first one will be used")
-        template = templates[0]
-        if not isinstance(template, dict):
-            warn(f"Ignoring integrated node {name}, provided node template is not a dictionary")
-            return
-        try:
-            workflow = json.loads(template["data"])
-        except:
-            traceback.print_exc()
-            warn(f"Ignoring integrated node {name}, node template data isn't a valid JSON string")
-            return
-
     export_outputs = info.get("export_outputs")
     if export_outputs is not None and not isinstance(export_outputs, list):
         warn(f"export_outputs entry should be a list but got {export_outputs}, ignoring")
@@ -476,6 +545,7 @@ def create_integrated_node(name, info):
         warn(f"Ignoring integrated node {name}, failed processing workflow")
         return
 
+    constant_state = hide_inputs(inputs, info.get("hide_inputs", {}))
     merge_inputs(inputs, info.get("merge_inputs", {}))
     rename_inputs(inputs, info.get("rename_inputs", {}))
 
@@ -483,6 +553,7 @@ def create_integrated_node(name, info):
         "PROCESSORS": processors,
         "INPUTS": inputs,
         "OUTPUTS": outputs,
+        "CONSTANT_STATE": constant_state,
         "CATEGORY": info.get("category", "Integrated"),
         "OUTPUT_NODE": is_output_node,
     })
