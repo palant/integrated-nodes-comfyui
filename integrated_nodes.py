@@ -19,6 +19,8 @@ class Node(object):
     def __init__(self, id, type, exported_inputs):
         cls = GLOBAL_NODE_CLASS_MAPPINGS.get(type)
         if cls is None:
+            cls = NODE_CLASS_MAPPINGS.get(type)
+        if cls is None:
             raise Exception(f"Unknown node type {type}")
 
         self.id = id
