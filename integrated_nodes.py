@@ -5,9 +5,14 @@ import traceback
 import yaml
 
 from nodes import NODE_CLASS_MAPPINGS as GLOBAL_NODE_CLASS_MAPPINGS
+from server import PromptServer
+from aiohttp import web
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
+WEB_DIRECTORY = 'web'
+
+DEFAULT_CATEGORY = 'integrated'
 
 class Node(object):
     def __init__(self, id, type, exported_inputs):
@@ -554,7 +559,7 @@ def create_integrated_node(name, info):
         "INPUTS": inputs,
         "OUTPUTS": outputs,
         "CONSTANT_STATE": constant_state,
-        "CATEGORY": info.get("category", "integrated"),
+        "CATEGORY": info.get("category", DEFAULT_CATEGORY),
         "OUTPUT_NODE": is_output_node,
     })
 
@@ -577,4 +582,45 @@ def load_config():
     for name, info in data.items():
         create_integrated_node(name, info)
 
+
+async def add_node(request):
+    post = await request.post()
+
+    prompt = post.get('prompt')
+    name = post.get('name')
+    if prompt is None or name is None:
+        return web.Response(status=400)
+
+    display_name = post.get('displayName', name)
+    category = post.get('category', DEFAULT_CATEGORY)
+
+    basedir = os.path.dirname(__file__)
+    config_path = os.path.join(basedir, "integrated_nodes.yaml")
+    with open(config_path, 'r') as input:
+        data = yaml.safe_load(input)
+
+    actual_name = name
+    i = 1
+    while actual_name in data or os.path.exists(os.path.join(basedir, f'{actual_name}.json')):
+        # Solve naming conflicts
+        i += 1
+        actual_name = f'{name}_{i}'
+
+    data[actual_name] = {
+        'workflow': f'{actual_name}.json'
+    }
+    if display_name:
+        data[actual_name]['display_name'] = display_name
+    if category:
+        data[actual_name]['category'] = category
+
+    with open(os.path.join(basedir, f'{actual_name}.json'), 'w') as output:
+        output.write(prompt)
+
+    with open(config_path, 'w') as output:
+        yaml.safe_dump(data, output)
+    return web.Response(status=204)
+
+
 load_config()
+PromptServer.instance.routes.post('/integrated_nodes/add')(add_node)
