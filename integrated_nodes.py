@@ -5,6 +5,7 @@ import traceback
 import yaml
 
 from nodes import NODE_CLASS_MAPPINGS as GLOBAL_NODE_CLASS_MAPPINGS
+from nodes import NODE_DISPLAY_NAME_MAPPINGS as GLOBAL_NODE_DISPLAY_NAME_MAPPINGS
 from server import PromptServer
 from aiohttp import web
 
@@ -619,7 +620,12 @@ async def add_node(request):
 
     with open(config_path, 'w') as output:
         yaml.safe_dump(data, output)
-    return web.Response(status=204)
+
+    create_integrated_node(actual_name, data[actual_name])
+    GLOBAL_NODE_CLASS_MAPPINGS[actual_name] = NODE_CLASS_MAPPINGS[actual_name]
+    GLOBAL_NODE_DISPLAY_NAME_MAPPINGS[actual_name] = NODE_DISPLAY_NAME_MAPPINGS[actual_name]
+
+    return web.Response(body=actual_name, content_type='text/plain')
 
 
 load_config()

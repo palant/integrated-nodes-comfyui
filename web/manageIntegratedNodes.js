@@ -1,4 +1,5 @@
 import { app } from "/scripts/app.js";
+import { api } from "/scripts/api.js";
 import { $el, ComfyDialog } from "/scripts/ui.js";
 
 const DEFAULT_CATEGORY = "integrated";
@@ -92,6 +93,11 @@ class CreateNodeDialog extends ComfyDialog
       alert(`Failed adding node, server responded with: ${response.statusText}`);
       return;
     }
+
+    let finalName = await response.text();
+    let nodeDefs = await api.getNodeDefs();
+    if (nodeDefs.hasOwnProperty(finalName))
+      await app.registerNodesFromDefs({[finalName]: nodeDefs[finalName]});
 
     this.close();
   }
