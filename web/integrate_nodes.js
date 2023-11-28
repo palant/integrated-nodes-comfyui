@@ -102,7 +102,7 @@ function generateYAML(name, category) {
     let yamlContent = `
 '${name}':
   display_name: '${name}'
-  workflow: integrated_nodes/workflows/${name}.json
+  workflow: integrated_nodes/${name}.json
   category: '${category}'
   `;
 
