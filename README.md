@@ -8,7 +8,7 @@ To install, clone this repository into `ComfyUI/custom_nodes` folder with `git c
 
 ## Example nodes
 
-The default `integrated_nodes.yaml` contains a bunch of nodes which you might consider useful.
+The default file `integrated_nodes.yaml.example` (used as fallback if no real `integrated_nodes.yaml` file exists) contains a bunch of nodes which you might consider useful.
 
 ### Double Prompt
 
@@ -62,7 +62,9 @@ It is equivalent to the following workflow:
 
 ## Adding your own integrated nodes
 
-You can add edit `integrated_nodes.yaml` file and add your own entries. These look like this:
+You can select some nodes in the workflow and click “Create Integrated Node from Selection” in the context menu. This will create a new `integrated_nodes.yaml` file if one doesn’t exist yet and add a new entry to it. The new integrated node can be used immediately.
+
+You can add also edit `integrated_nodes.yaml` file manually, changes will only take effect after ComfyUI is restarted however. The entries in this file look like this:
 
 ```yaml
 DoublePrompt:

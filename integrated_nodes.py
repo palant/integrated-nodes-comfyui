@@ -13,7 +13,11 @@ NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 WEB_DIRECTORY = 'web'
 
+CONFIG_FILE = 'integrated_nodes.yaml'
+CONFIG_FILE_FALLBACK = 'integrated_nodes.yaml.example'
 DEFAULT_CATEGORY = 'integrated'
+
+current_config = CONFIG_FILE
 
 class Node(object):
     def __init__(self, id, type, exported_inputs):
@@ -311,7 +315,7 @@ class IntegratedNode(object):
 
 
 def warn(warning):
-    print(f"integrated_nodes.yaml: {warning}", file=sys.stderr)
+    print(f"{current_config}: {warning}", file=sys.stderr)
 
 
 max_register_id = 0
@@ -574,7 +578,14 @@ def create_integrated_node(name, info):
 
 
 def load_config():
-    path = os.path.join(os.path.dirname(__file__), "integrated_nodes.yaml")
+    global current_config
+
+    basedir = os.path.dirname(__file__)
+    current_config = CONFIG_FILE
+    path = os.path.join(basedir, current_config)
+    if not os.path.exists(path):
+        current_config = CONFIG_FILE_FALLBACK
+        path = os.path.join(basedir, current_config)
     with open(path, 'r') as input:
         data = yaml.safe_load(input)
 
@@ -587,6 +598,8 @@ def load_config():
 
 
 async def add_node(request):
+    global current_config
+
     post = await request.post()
 
     prompt = post.get('prompt')
@@ -598,7 +611,9 @@ async def add_node(request):
     category = post.get('category', DEFAULT_CATEGORY)
 
     basedir = os.path.dirname(__file__)
-    config_path = os.path.join(basedir, "integrated_nodes.yaml")
+    config_path = os.path.join(basedir, CONFIG_FILE)
+    if not os.path.exists(config_path):
+        config_path = os.path.join(basedir, CONFIG_FILE_FALLBACK)
     with open(config_path, 'r') as input:
         data = yaml.safe_load(input)
 
@@ -620,9 +635,10 @@ async def add_node(request):
     with open(os.path.join(basedir, f'{actual_name}.json'), 'w') as output:
         output.write(prompt)
 
-    with open(config_path, 'w') as output:
+    with open(os.path.join(basedir, CONFIG_FILE), 'w') as output:
         yaml.safe_dump(data, output, sort_keys=False)
 
+    current_config = CONFIG_FILE
     create_integrated_node(actual_name, data[actual_name])
     GLOBAL_NODE_CLASS_MAPPINGS[actual_name] = NODE_CLASS_MAPPINGS[actual_name]
     GLOBAL_NODE_DISPLAY_NAME_MAPPINGS[actual_name] = NODE_DISPLAY_NAME_MAPPINGS[actual_name]
