@@ -55,7 +55,7 @@ class Node(object):
             # Hidden inputs are always exported
             if name not in exported_inputs:
                 exported_inputs[name] = HiddenInput(register=new_register(), descriptor=type)
-            elif exported_inputs[name].type != type:
+            elif exported_inputs[name].descriptor != type:
                 raise Exception(f"Mismatched types for hidden input {name}: {type} and {exported_inputs[name].type}")
             self.input_map[name] = exported_inputs[name].register
 
