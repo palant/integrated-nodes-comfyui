@@ -164,13 +164,6 @@ class HiddenInput(object):
         return [self.register]
 
 
-class ConstantInput(object):
-    COLLECTION = None
-
-    def __init__(self, registers):
-        self.registers = registers
-
-
 class Output(object):
     def __init__(self, register, name, type):
         self.register = register
@@ -237,7 +230,7 @@ class IntegratedNode(object):
     PROCESSORS = None
     INPUTS = None
     OUTPUTS = None
-    CONSTANT_STATE = None
+    INITIAL_STATE = None
 
     def __init__(self):
         self.processors = [processor() for processor in self.PROCESSORS]
@@ -246,8 +239,7 @@ class IntegratedNode(object):
 
     @classmethod
     def construct_state(s, **kwargs):
-        state = {}
-        kwargs.update(s.CONSTANT_STATE)
+        state = s.INITIAL_STATE.copy()
         for name, value in kwargs.items():
             try:
                 input = s.INPUTS[name]
@@ -452,7 +444,7 @@ def process_workflow(workflow, export_outputs, rename_outputs):
 
 
 def hide_inputs(inputs, hidden):
-    constant_state = {}
+    initial_state = {}
     for name in hidden:
         try:
             input = inputs[name]
@@ -465,10 +457,11 @@ def hide_inputs(inputs, hidden):
             warn(f"Cannot hide input {name}, it is required and has no default value")
             continue
 
-        constant_state[name] = value
-        inputs[name] = ConstantInput(input.registers)
+        for register in input.registers:
+            initial_state[register] = value
+        del inputs[name]
 
-    return constant_state
+    return initial_state
 
 
 def merge_inputs(inputs, mapping):
@@ -557,15 +550,15 @@ def create_integrated_node(name, info):
         warn(f"Ignoring integrated node {name}, failed processing workflow")
         return
 
-    constant_state = hide_inputs(inputs, info.get("hide_inputs", {}))
     merge_inputs(inputs, info.get("merge_inputs", {}))
+    initial_state = hide_inputs(inputs, info.get("hide_inputs", {}))
     rename_inputs(inputs, info.get("rename_inputs", {}))
 
     cls = type(name, (IntegratedNode,), {
         "PROCESSORS": processors,
         "INPUTS": inputs,
         "OUTPUTS": outputs,
-        "CONSTANT_STATE": constant_state,
+        "INITIAL_STATE": initial_state,
         "CATEGORY": info.get("category", DEFAULT_CATEGORY),
         "OUTPUT_NODE": is_output_node,
     })
