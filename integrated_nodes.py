@@ -255,8 +255,7 @@ class IntegratedNode(object):
     def INPUT_TYPES(s):
         types = {}
         for name, input in s.INPUTS.items():
-            if input.COLLECTION is not None:
-                types.setdefault(input.COLLECTION, {})[name] = input.descriptor
+            types.setdefault(input.COLLECTION, {})[name] = input.descriptor
         return types
 
     @classmethod
